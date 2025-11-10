@@ -25,6 +25,11 @@ class Settings(BaseModel):
     HF_MODEL_NAME: str = os.getenv("HF_MODEL_NAME", "distilbert-base-uncased-finetuned-sst-2-english")
     HF_DEVICE: int = int(os.getenv("HF_DEVICE", "-1"))
 
+    # Ensemble configuration
+    HF_MODEL_BASE_DIR: str = os.getenv("HF_MODEL_BASE_DIR", "/models/checkpoints")
+    HF_MODEL_PREFIX: str = os.getenv("HF_MODEL_PREFIX", "best_model_cross_val_BCE_roberta-base")
+    HF_NUM_FOLDS: int = int(os.getenv("HF_NUM_FOLDS", "5"))
+
     # Hard cap for tokenizer (tokens). Keeps pipeline from complaining about missing max length.
     MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "512"))
 

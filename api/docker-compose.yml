@@ -41,25 +41,29 @@ services:
       MONGO_URI: mongodb://mongo:27017/distriage
       MONGO_DB: distriage
       APP_NAME: DisTriage API
-      HF_MODEL_NAME: /models/biomedbert_ft/checkpoint-112
-      TOKENIZER_PATH: microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext
-      HF_DEVICE: "-1"   # set "0" if you want GPU in the worker
-      MAX_TOKENS: "512" # explicit token cap for tokenizer/truncation
+      HF_MODEL_BASE_DIR: /models/checkpoints
+      HF_MODEL_PREFIX: best_model_cross_val_BCE_roberta-base
+      HF_NUM_FOLDS: "5"
+      HF_DEVICE: "0"   # GPU enabled for ensemble
+      MAX_TOKENS: "512"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
     volumes:
-      - ../experiment/model/biomedbert_ft/checkpoint-112:/models/biomedbert_ft/checkpoint-112:ro
+      - ../experiment/model/checkpoints:/models/checkpoints:ro
     depends_on:
       redis:
         condition: service_healthy
       mongo:
         condition: service_healthy
+    runtime: nvidia
     command:
       [
         "celery", "-A", "app.worker.celery_app:app", "worker",
         "--loglevel=INFO",
         "--queues=ingress,infer",
         "--hostname=worker@%h",
-        "--concurrency=4",
-        "--prefetch-multiplier=4"
+        "--concurrency=2",
+        "--prefetch-multiplier=2"
       ]
 
   flower:
@@ -85,17 +89,19 @@ services:
     environment:
       APP_NAME: DisTriage API
       API_PREFIX: /api/v1
-      CORS_ORIGINS: http://localhost:3000,http://localhost:8000
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8501
       MONGO_URI: mongodb://mongo:27017/distriage
       MONGO_DB: distriage
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
-      HF_MODEL_NAME: /models/biomedbert_ft/checkpoint-112
-      HF_DEVICE: "-1"   # set "0" if you want GPU in the API
-      MAX_TOKENS: "512" # keep API-side pipelines consistent if used
+      HF_MODEL_BASE_DIR: /models/checkpoints
+      HF_MODEL_PREFIX: best_model_cross_val_BCE_roberta-base
+      HF_NUM_FOLDS: "5"
+      HF_DEVICE: "-1"   # CPU for API (worker handles inference)
+      MAX_TOKENS: "512"
     volumes:
-      - ../experiment/model/biomedbert_ft/checkpoint-112:/models/biomedbert_ft/checkpoint-112:ro
+      - ../experiment/model/checkpoints:/models/checkpoints:ro
     depends_on:
       redis:
         condition: service_healthy
@@ -104,7 +110,7 @@ services:
     ports:
       - "8000:8000"
     command: >
-      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8501"
 
 volumes:
   mongo_data:

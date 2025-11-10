@@ -13,7 +13,7 @@ from app.models.document import DocumentEntry
 from app.models.job import Job
 from app.services.sibils_client import fetch_medline, fetch_pmc
 from app.services.text_utils import normalize_whitespace
-from app.services.model_infer import predict_batch, get_pipe
+from app.services.model_infer import predict_batch, get_pipes
 from app.services.batching import chunked
 
 log = get_task_logger(__name__)
@@ -48,10 +48,10 @@ async def _ensure_beanie():
 
 async def _prefetch_model():
     try:
-        get_pipe()
-        log.info("Model prefetched and ready.")
+        get_pipes()
+        log.info("Ensemble models prefetched and ready.")
     except Exception as e:
-        log.exception("Failed prefetching model: %s", e)
+        log.exception("Failed prefetching models: %s", e)
 
 
 async def _init_runtime():
@@ -122,30 +122,8 @@ async def _ingress_batch(job_id: str, pmids: List[int]):
                 pmc_ids.append(pmcid)
             await entry.save()
 
-        pmc_map = await fetch_pmc(session, pmc_ids) if pmc_ids else {}
-
-        for pmid in pmids:
-            entry = await DocumentEntry.find_one(
-                DocumentEntry.job_id == job_id, DocumentEntry.pmid == int(pmid)
-            )
-            if not entry or entry.ingress_status == "failed":
-                continue
-
-            if entry.pmcid and entry.pmcid in pmc_map:
-                pmc_doc = (pmc_map[entry.pmcid] or {}).get("document", {})
-                parts = []
-                for sec in pmc_doc.get("body_sections", []):
-                    if isinstance(sec, dict):
-                        if sec.get("title"):
-                            parts.append(str(sec["title"]).strip())
-                        for c in sec.get("contents", []):
-                            t = (c.get("text") or "").strip()
-                            if t:
-                                parts.append(t)
-                entry.pmc_text = normalize_whitespace(" ".join(parts)) or None
-
-            # Compose text for inference (title + fulltext/abstract), cap length
-            text = f"{entry.title or ''}. {(entry.pmc_text or entry.medline_abstract or '')}".strip()
+            # Compose text for inference (title + abstract), cap length
+            text = f"{entry.title or ''}. {(entry.medline_abstract or '')}".strip()
             max_chars = settings.MAX_TEXT_CHARS
             if len(text) > max_chars:
                 text = text[:max_chars]
@@ -186,10 +164,11 @@ async def _infer_batch_async(job_id: str, pmids: List[int]):
     if not docs:
         return {"ok": True, "count": 0}
 
-    texts = [d.text_for_infer or "" for d in docs]
+    titles = [d.title or "" for d in docs]
+    abstracts = [d.medline_abstract or "" for d in docs]
 
     try:
-        preds = predict_batch(texts)
+        preds = predict_batch(titles, abstracts)
     except Exception as e:
         for d in docs:
             d.infer_status = "failed"

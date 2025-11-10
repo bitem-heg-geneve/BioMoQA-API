@@ -2,8 +2,8 @@ FROM python:3.12-slim
 WORKDIR /app
 ENV PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-# 1) Install CPU-only PyTorch explicitly from the CPU index (tiny compared to CUDA)
-RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.8.0
+# Install CUDA-enabled PyTorch for GPU support
+RUN pip install --no-cache-dir torch==2.8.0
 
 COPY requirements.base.txt requirements.worker.txt ./
 RUN pip install --no-cache-dir -r requirements.worker.txt

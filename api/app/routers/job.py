@@ -124,6 +124,7 @@ async def get_job(job_id: str):
         score = 0.0
         text_source = "abstract"
         if d.predictions:
+            #Why list ?
             if isinstance(d.predictions, list) and d.predictions:
                 s = d.predictions[0].get("score", 0.0)
                 score = float(s)
