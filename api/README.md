@@ -176,11 +176,11 @@ HF_NUM_FOLDS=5
 
 Models are loaded from:
 ```
-../experiment/model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-1
-../experiment/model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-2
-../experiment/model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-3
-../experiment/model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-4
-../experiment/model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-5
+../model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-1
+../model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-2
+../model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-3
+../model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-4
+../model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-5
 ```
 
 Each inference request runs through all 5 models and returns the averaged prediction score.

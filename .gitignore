@@ -27,8 +27,7 @@ celerybeat-schedule
 celerybeat.pid
 
 # Experiment outputs
-experiment/model/checkpoints
-experiment/data/publication
+model/checkpoints
 .trash/api-old/.DS_Store
 api/.DS_Store
 api/app/.DS_Store

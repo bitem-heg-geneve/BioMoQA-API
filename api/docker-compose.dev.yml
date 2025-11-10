@@ -3,7 +3,7 @@ services:
     volumes:
       - ./app:/app/app:cached
       - ./worker:/app/app/worker:cached
-      - ../experiment/model/checkpoints:/models/checkpoints:ro
+      - ../model/checkpoints:/models/checkpoints:ro
     command: >
       uvicorn app.main:app
       --host 0.0.0.0 --port 8501
@@ -13,7 +13,7 @@ services:
     volumes:
       - ./app:/app/app:cached
       - ./worker:/app/app/worker:cached
-      - ../experiment/model/checkpoints:/models/checkpoints:ro
+      - ../model/checkpoints:/models/checkpoints:ro
     command: >
       celery -A app.worker.celery_app:app worker
       --loglevel=INFO

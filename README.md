@@ -27,6 +27,22 @@ DisTriage-api/
 
 ---
 
+## Setup
+
+### Download Model Checkpoints
+
+Before running the API, you need to download the fine-tuned PubMedBERT model checkpoints:
+
+```bash
+./download_checkpoints.sh
+```
+
+This script will:
+- Download model checkpoints from the S3 bucket
+- Store them in `model/checkpoints/`
+
+---
+
 ## Quickstart
 
 To launch the API stack with Docker:
