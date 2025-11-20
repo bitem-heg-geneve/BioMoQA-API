@@ -39,7 +39,7 @@ class JobCreate(BaseModel):
             "example": {
                 "use_fulltext": True,
                 "article_set": [
-                    {"pmid": 10216320},
+                    {"pmid": 31636882},
                     {"pmid": 23462742},
                     {"pmid": 37578046},
                     {"pmid": 38114491}
