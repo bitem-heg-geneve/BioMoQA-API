@@ -1,7 +1,7 @@
 # BioMoQA-Triage
 
-BioMoQA-Triage is a pipeline for **DisProt literature triage**, combining
-**FastAPI**, **Celery**, **MongoDB**, and **Redis** with a fine-tuned PubMedBERT model.
+BioMoQA-Triage is a pipeline for **BioMoQA literature triage**, combining
+**FastAPI**, **Celery**, **MongoDB**, and **Redis** with an ensemble of fine-tuned RoBERTa models.
 
 ---
 
