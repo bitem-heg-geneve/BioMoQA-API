@@ -9,8 +9,8 @@ A FastAPI + Celery + MongoDB + Redis pipeline for **BioMoQA-Triage** using an en
 - **Job-based submission** – Create jobs with a set of PMIDs
 - **Two-Stage Pipeline**:
   1. **Ingress**: Fetch MEDLINE abstracts and, if available, PMC fulltext via SIBILS API
-  2. **Inference**: Run ensemble of 5 fine-tuned RoBERTa models on retrieved text
-- **Ensemble Prediction** – Average predictions across 5 cross-validation fold models for robust scoring
+  2. **Inference**: Run fine-tuned RoBERTa model on title + abstract
+- **Single Model Inference** – Default uses 1 model for ~3x faster inference (configurable up to 5-fold ensemble)
 - **Batch processing** – Configurable batch sizes and wait times for ingress & inference
 - **Job Status Tracking** – Poll `/api/v1/job/{job_id}` for progress
 - **Results Retrieval** – Get scores, source (abstract/fulltext), and texts
@@ -54,7 +54,7 @@ Environment variables (via `.env` or `docker-compose`):
 | `REDIS_URL`           | `redis://redis:6379/0`                           | Redis broker                  |
 | `HF_MODEL_BASE_DIR`   | `/models/checkpoints`                            | Base directory for models     |
 | `HF_MODEL_PREFIX`     | `best_model_cross_val_BCE_roberta-base`          | Model filename prefix         |
-| `HF_NUM_FOLDS`        | `5`                                              | Number of cross-validation folds |
+| `HF_NUM_FOLDS`        | `1`                                              | Number of cross-validation folds |
 | `HF_DEVICE`           | `-1`                                             | Device (`-1` = CPU, `0` = GPU)|
 | `MAX_TOKENS`          | `512`                                            | Maximum tokens for tokenizer  |
 | `MAX_TEXT_CHARS`      | `5000`                                           | Maximum characters per doc    |
@@ -166,7 +166,7 @@ Returns the full job results as a downloadable JSON file (ranked by submission o
 
 ## Model
 
-The system uses an **ensemble of 5 cross-validation fold models** for robust predictions:
+The system uses a **fine-tuned RoBERTa model** (single fold by default) for robust predictions:
 
 ```bash
 HF_MODEL_BASE_DIR=/models/checkpoints
@@ -183,7 +183,7 @@ Models are loaded from:
 ../model/checkpoints/best_model_cross_val_BCE_roberta-base_fold-5
 ```
 
-Each inference request runs through all 5 models and returns the averaged prediction score.
+Default uses 1 model for fast inference. Set HF_NUM_FOLDS=5 for ensemble averaging (slower but slightly more robust).
 
 ---
 
