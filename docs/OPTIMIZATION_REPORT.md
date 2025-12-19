@@ -1,7 +1,6 @@
 # BioMoQA API Performance Optimization Report
 
 **Date:** December 19, 2025
-**Author:** Paul van Rijen (with Claude Code assistance)
 
 ## Executive Summary
 
