@@ -31,13 +31,13 @@ class ArticleIn(BaseModel):
         return int(v)
 
 class JobCreate(BaseModel):
-    use_fulltext: bool = True
+    use_fulltext: bool = False
     article_set: List[ArticleIn]
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "use_fulltext": True,
+                "use_fulltext": False,
                 "article_set": [
                     {"pmid": 31636882},
                     {"pmid": 23462742},
@@ -156,7 +156,7 @@ async def get_job(job_id: str):
 
     return JobOut(
         id=job.job_id,
-        use_fulltext=True,
+        use_fulltext=False,
         status=status_map.get(job.status, "pending"),
         job_created_at=job_created_at,
         process_start_at=process_start_at,

@@ -41,7 +41,7 @@ services:
       APP_NAME: BioMoQA-Triage API
       HF_MODEL_BASE_DIR: /models/checkpoints
       HF_MODEL_PREFIX: best_model_cross_val_BCE_roberta-base
-      HF_NUM_FOLDS: "1"
+      HF_NUM_FOLDS: "5"
       HF_DEVICE: "-1"   # CPU mode
       OMP_NUM_THREADS: "12"
       MKL_NUM_THREADS: "12"
@@ -97,7 +97,7 @@ services:
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       HF_MODEL_BASE_DIR: /models/checkpoints
       HF_MODEL_PREFIX: best_model_cross_val_BCE_roberta-base
-      HF_NUM_FOLDS: "1"
+      HF_NUM_FOLDS: "5"
       HF_DEVICE: "-1"   # CPU for API (worker handles inference)
       OMP_NUM_THREADS: "12"
       MKL_NUM_THREADS: "12"
