@@ -3,14 +3,20 @@ from transformers import pipeline, AutoTokenizer
 from ..config import settings
 from typing import Optional
 
-_CACHE: dict[str, Optional[list]] = {"pipes": None}
+_CACHE: dict[str, Optional[list]] = {}
 
-def get_pipes():
+MODEL_DIRS = {
+    "v1": settings.HF_MODEL_BASE_DIR,
+    "v2": settings.HF_MODEL_BASE_DIR_V2,
+}
+
+def get_pipes(version: str = "v1"):
     """Load all cross-validation fold models for ensemble inference."""
-    if _CACHE["pipes"] is None:
+    if version not in _CACHE:
+        base_dir = MODEL_DIRS.get(version, settings.HF_MODEL_BASE_DIR)
         pipes = []
         for fold_idx in range(1, settings.HF_NUM_FOLDS + 1):
-            model_path = f"{settings.HF_MODEL_BASE_DIR}/{settings.HF_MODEL_PREFIX}_fold-{fold_idx}"
+            model_path = f"{base_dir}/{settings.HF_MODEL_PREFIX}_fold-{fold_idx}"
             tokenizer = AutoTokenizer.from_pretrained(
                 model_path,
                 model_max_length=settings.MAX_TOKENS,
@@ -23,17 +29,17 @@ def get_pipes():
                 device=settings.HF_DEVICE,
             )
             pipes.append(pipe)
-        _CACHE["pipes"] = pipes
-    return _CACHE["pipes"]
+        _CACHE[version] = pipes
+    return _CACHE[version]
 
-def predict_batch(titles: list[str], abstracts: list[str]) -> list[dict]:
+def predict_batch(titles: list[str], abstracts: list[str], version: str = "v1") -> list[dict]:
     """
     Ensemble inference across all cross-validation folds.
     Returns a dict per text with:
       - score: ensemble probability of the POSITIVE class (0..1)
       - all:   full list of {label, score} for debugging/inspection
     """
-    pipes = get_pipes()
+    pipes = get_pipes(version)
 
     # Combine titles and abstracts
     texts = [f"{title}. {abstract}".strip() for title, abstract in zip(titles, abstracts)]

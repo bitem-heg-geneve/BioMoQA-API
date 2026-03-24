@@ -31,7 +31,8 @@ async def on_startup():
 async def on_shutdown():
     await close_db()
 
-app.include_router(job_router, prefix=settings.API_PREFIX, tags=["Job"])
+app.include_router(job_router, prefix="/api/v1", tags=["v1"])
+app.include_router(job_router, prefix="/api/v2", tags=["v2"])
 
 @app.get("/healthz", summary="Healthz", tags=["default"])
 async def healthz():

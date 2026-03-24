@@ -23,6 +23,7 @@ class Job(Document):
     infer_done: int = 0
     infer_failed: int = 0
 
+    model_version: str = "v1"
     status: str = "queued"
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

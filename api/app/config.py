@@ -27,6 +27,7 @@ class Settings(BaseModel):
 
     # Ensemble configuration
     HF_MODEL_BASE_DIR: str = os.getenv("HF_MODEL_BASE_DIR", "/models/checkpoints")
+    HF_MODEL_BASE_DIR_V2: str = os.getenv("HF_MODEL_BASE_DIR_V2", "/models/checkpoints_v2")
     HF_MODEL_PREFIX: str = os.getenv("HF_MODEL_PREFIX", "best_model_cross_val_BCE_roberta-base")
     HF_NUM_FOLDS: int = int(os.getenv("HF_NUM_FOLDS", "5"))
 

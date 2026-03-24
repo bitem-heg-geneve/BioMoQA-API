@@ -28,6 +28,7 @@ celerybeat.pid
 
 # Experiment outputs
 model/checkpoints
+model/checkpoints_v2
 .trash/api-old/.DS_Store
 api/.DS_Store
 api/app/.DS_Store

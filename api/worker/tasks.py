@@ -47,11 +47,12 @@ async def _ensure_beanie():
 
 
 async def _prefetch_model():
-    try:
-        get_pipes()
-        log.info("Ensemble models prefetched and ready.")
-    except Exception as e:
-        log.exception("Failed prefetching models: %s", e)
+    for version in ("v1", "v2"):
+        try:
+            get_pipes(version)
+            log.info("Ensemble models (%s) prefetched and ready.", version)
+        except Exception as e:
+            log.warning("Could not prefetch %s models: %s", version, e)
 
 
 async def _init_runtime():
@@ -153,6 +154,10 @@ def infer_batch_task(self, job_id: str, pmids: List[int]):
 async def _infer_batch_async(job_id: str, pmids: List[int]):
     await _init_runtime()
 
+    # Look up model version from the job
+    job = await Job.find_one(Job.job_id == job_id)
+    model_version = job.model_version if job else "v1"
+
     docs: List[DocumentEntry] = []
     for pmid in pmids:
         entry = await DocumentEntry.find_one(
@@ -168,7 +173,7 @@ async def _infer_batch_async(job_id: str, pmids: List[int]):
     abstracts = [d.medline_abstract or "" for d in docs]
 
     try:
-        preds = predict_batch(titles, abstracts)
+        preds = predict_batch(titles, abstracts, version=model_version)
     except Exception as e:
         for d in docs:
             d.infer_status = "failed"

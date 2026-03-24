@@ -40,6 +40,7 @@ services:
       MONGO_DB: biomoqa-triage
       APP_NAME: BioMoQA-Triage API
       HF_MODEL_BASE_DIR: /models/checkpoints
+      HF_MODEL_BASE_DIR_V2: /models/checkpoints_v2
       HF_MODEL_PREFIX: best_model_cross_val_BCE_roberta-base
       HF_NUM_FOLDS: "5"
       HF_DEVICE: "-1"   # CPU mode
@@ -51,6 +52,7 @@ services:
       INGRESS_BATCH_SIZE: "128"
     volumes:
       - ../model/checkpoints:/models/checkpoints:ro
+      - ../model/checkpoints_v2:/models/checkpoints_v2:ro
     depends_on:
       redis:
         condition: service_healthy
@@ -96,6 +98,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       HF_MODEL_BASE_DIR: /models/checkpoints
+      HF_MODEL_BASE_DIR_V2: /models/checkpoints_v2
       HF_MODEL_PREFIX: best_model_cross_val_BCE_roberta-base
       HF_NUM_FOLDS: "5"
       HF_DEVICE: "-1"   # CPU for API (worker handles inference)
@@ -107,6 +110,7 @@ services:
       INGRESS_BATCH_SIZE: "128"
     volumes:
       - ../model/checkpoints:/models/checkpoints:ro
+      - ../model/checkpoints_v2:/models/checkpoints_v2:ro
     depends_on:
       redis:
         condition: service_healthy

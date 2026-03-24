@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, field_validator, ConfigDict
 
 from ..models.job import Job
@@ -48,10 +48,21 @@ class JobCreate(BaseModel):
         }
     )
 
+
+def _extract_model_version(request: Request) -> str:
+    """Extract model version from the URL prefix (e.g. /api/v2/job -> 'v2')."""
+    path = request.url.path
+    if "/api/v2" in path:
+        return "v2"
+    return "v1"
+
+
 @router.post("/job", response_model=dict, summary="Create Job", description="Create a triage job with a list of PMIDs.")
-async def create_job(payload: JobCreate):
+async def create_job(payload: JobCreate, request: Request):
     if not payload.article_set:
         raise HTTPException(400, "article_set is empty")
+
+    model_version = _extract_model_version(request)
 
     pmids = [a.pmid for a in payload.article_set]
     seen: set[int] = set()
@@ -68,6 +79,7 @@ async def create_job(payload: JobCreate):
         dedup_dropped=len(pmids) - len(unique),
         ingress_batch_size=settings.INGRESS_BATCH_SIZE,
         infer_batch_size=settings.INFER_BATCH_SIZE,
+        model_version=model_version,
         status="queued",
     )
     await job.insert()
@@ -101,6 +113,7 @@ class ArticleOut(BaseModel):
 class JobOut(BaseModel):
     id: str
     use_fulltext: bool
+    model_version: str = "v1"
     status: Status
     job_created_at: datetime
     process_start_at: Optional[datetime] = None
@@ -117,7 +130,7 @@ async def get_job(job_id: str):
     docs = await DocumentEntry.find(DocumentEntry.job_id == job_id).to_list()
 
     order_idx = {pmid: i for i, pmid in enumerate(job.submitted_order or [])}
-    docs.sort(key=lambda d: (order_idx.get(d.pmid, 10**12), d.pmid)) 
+    docs.sort(key=lambda d: (order_idx.get(d.pmid, 10**12), d.pmid))
 
     items: List[ArticleOut] = []
     for d in docs:
@@ -157,6 +170,7 @@ async def get_job(job_id: str):
     return JobOut(
         id=job.job_id,
         use_fulltext=False,
+        model_version=job.model_version,
         status=status_map.get(job.status, "pending"),
         job_created_at=job_created_at,
         process_start_at=process_start_at,
@@ -168,6 +182,7 @@ async def get_job(job_id: str):
 class JobStatusResponse(BaseModel):
     job_id: str
     status: str
+    model_version: str = "v1"
     submitted_pmids: int
     dedup_dropped: int
     ingress_queued: int
@@ -211,6 +226,7 @@ async def get_job_status(job_id: str):
     return JobStatusResponse(
         job_id=job.job_id,
         status=job.status,
+        model_version=job.model_version,
         submitted_pmids=job.submitted_pmids,
         dedup_dropped=job.dedup_dropped,
         ingress_queued=job.ingress_queued,
