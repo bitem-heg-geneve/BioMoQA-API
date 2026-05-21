@@ -8,6 +8,7 @@ _CACHE: dict[str, Optional[list]] = {}
 MODEL_DIRS = {
     "v1": settings.HF_MODEL_BASE_DIR,
     "v2": settings.HF_MODEL_BASE_DIR_V2,
+    "v3": settings.HF_MODEL_BASE_DIR_V3,
 }
 
 def get_pipes(version: str = "v1"):

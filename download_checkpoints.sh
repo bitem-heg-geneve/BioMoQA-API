@@ -3,7 +3,8 @@
 # Usage:
 #   ./download_checkpoints.sh         # download v1 (checkpoints/)
 #   ./download_checkpoints.sh v2      # download v2 (checkpoints_v2/)
-#   ./download_checkpoints.sh all     # download both
+#   ./download_checkpoints.sh v3      # download v3 (checkpoints_v3/)
+#   ./download_checkpoints.sh all     # download all versions
 
 set -euo pipefail
 
@@ -43,12 +44,16 @@ case "$VERSION" in
     v2)
         download_version "checkpoints_v2" "model/checkpoints_v2"
         ;;
+    v3)
+        download_version "checkpoints_v3" "model/checkpoints_v3"
+        ;;
     all)
         download_version "checkpoints" "model/checkpoints"
         download_version "checkpoints_v2" "model/checkpoints_v2"
+        download_version "checkpoints_v3" "model/checkpoints_v3"
         ;;
     *)
-        echo "Usage: $0 [v1|v2|all]"
+        echo "Usage: $0 [v1|v2|v3|all]"
         exit 1
         ;;
 esac

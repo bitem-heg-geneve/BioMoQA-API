@@ -33,6 +33,7 @@ async def on_shutdown():
 
 app.include_router(job_router, prefix="/api/v1", tags=["v1"])
 app.include_router(job_router, prefix="/api/v2", tags=["v2"])
+app.include_router(job_router, prefix="/api/v3", tags=["v3"])
 
 @app.get("/healthz", summary="Healthz", tags=["default"])
 async def healthz():
