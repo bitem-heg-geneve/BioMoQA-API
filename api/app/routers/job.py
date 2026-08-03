@@ -50,8 +50,10 @@ class JobCreate(BaseModel):
 
 
 def _extract_model_version(request: Request) -> str:
-    """Extract model version from the URL prefix (e.g. /api/v2/job -> 'v2')."""
+    """Extract model version from the URL prefix (e.g. /api/v3/job -> 'v3')."""
     path = request.url.path
+    if "/api/v3" in path:
+        return "v3"
     if "/api/v2" in path:
         return "v2"
     return "v1"
