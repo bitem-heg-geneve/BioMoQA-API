@@ -1,0 +1,64 @@
+name: Trivy Security Scan
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  schedule:
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: trivy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+env:
+  IMAGE_REF: worker-ci:${{ github.sha }}
+
+jobs:
+  trivy:
+    name: Scan Worker image
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build Worker image
+        run: |
+          docker build \
+            --tag "${IMAGE_REF}" \
+            --file api/Dockerfile.worker \
+            api/
+
+      - name: Scan Worker image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE_REF }}
+          scanners: vuln
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: trivy-worker.sarif
+          limit-severities-for-sarif: "true"
+          ignore-unfixed: "true"
+          trivyignores: api/.trivyignore
+          exit-code: "1"
+          timeout: 15m
+
+      - name: Upload Trivy results to GitHub Security
+        if: always() && hashFiles('trivy-worker.sarif') != ''
+        uses: github/codeql-action/upload-sarif@f205ea1c3313d32999d8d6a48b4f6530d4437b38 # v4.37.4
+        with:
+          sarif_file: trivy-worker.sarif
+          category: trivy-worker
