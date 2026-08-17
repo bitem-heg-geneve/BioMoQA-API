@@ -71,7 +71,7 @@ services:
       mongo:
         condition: service_healthy
     command:
-      ["celery", "-A", "app.worker.celery_app:app", "worker",
+      ["uv", "run", "celery", "-A", "app.worker.celery_app:app", "worker",
        "--loglevel=INFO", "--queues=ingress,infer",
        "--hostname=worker@%h", "--concurrency=4", "--prefetch-multiplier=1"]
     cap_drop: [ALL]
@@ -141,7 +141,7 @@ services:
     ports:
       - "127.0.0.1:8501:8501"
     command: >
-      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8501"
+      sh -c "uv run uvicorn app.main:app --host 0.0.0.0 --port 8501"
     cap_drop: [ALL]
     cap_add: [SETUID, SETGID, CHOWN, DAC_OVERRIDE]
     security_opt:
