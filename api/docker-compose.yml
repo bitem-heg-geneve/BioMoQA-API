@@ -61,6 +61,16 @@ services:
       MAX_TOKENS: "512"
       INFER_BATCH_SIZE: "64"
       INGRESS_BATCH_SIZE: "128"
+      # Shared triage guard: the text source is required (no default in the
+      # code), base URL without a trailing slash.
+      SIBILS_URL: "${BIOMOQA_SIBILS_URL:-https://biodiversitypmc.sibils.org/api}"
+      # Readiness gate before the worker starts (app/readiness.py): every
+      # version in BIOMOQA_READINESS_VERSIONS must score the control texts as
+      # expected, and SIBiLS must return the control PMID. Set
+      # BIOMOQA_READINESS_FETCH=0 only for offline development.
+      BIOMOQA_READINESS_VERSIONS: "${BIOMOQA_READINESS_VERSIONS:-v1,v2,v3}"
+      BIOMOQA_READINESS_MIN: "${BIOMOQA_READINESS_MIN:-0.6}"
+      BIOMOQA_READINESS_FETCH: "${BIOMOQA_READINESS_FETCH:-1}"
     volumes:
       - ../model/checkpoints:/models/checkpoints:ro
       - ../model/checkpoints_v2:/models/checkpoints_v2:ro
@@ -70,10 +80,17 @@ services:
         condition: service_healthy
       mongo:
         condition: service_healthy
+    # Readiness first, then the worker (same order as the Dockerfile CMD): a
+    # worker that would score with the wrong model or without a text source
+    # never starts, and `docker compose ps` shows it restarting.
     command:
-      ["uv", "run", "celery", "-A", "app.worker.celery_app:app", "worker",
-       "--loglevel=INFO", "--queues=ingress,infer",
-       "--hostname=worker@%h", "--concurrency=4", "--prefetch-multiplier=1"]
+      - sh
+      - -c
+      - >-
+        /app/.venv/bin/python -m app.readiness
+        && exec /app/.venv/bin/celery -A app.worker.celery_app:app worker
+        --loglevel=INFO --queues=ingress,infer
+        --hostname=worker@%h --concurrency=4 --prefetch-multiplier=1
     cap_drop: [ALL]
     cap_add: [SETUID, SETGID, CHOWN, DAC_OVERRIDE]
     security_opt:
@@ -129,6 +146,8 @@ services:
       MAX_TOKENS: "512"
       INFER_BATCH_SIZE: "64"
       INGRESS_BATCH_SIZE: "128"
+      # /readyz fetches the control PMID from the same text source as the worker.
+      SIBILS_URL: "${BIOMOQA_SIBILS_URL:-https://biodiversitypmc.sibils.org/api}"
     volumes:
       - ../model/checkpoints:/models/checkpoints:ro
       - ../model/checkpoints_v2:/models/checkpoints_v2:ro
