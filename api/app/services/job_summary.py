@@ -14,7 +14,7 @@ the job status:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Iterable, Optional, Tuple
 
 TEXT_OK = "ok"
@@ -25,6 +25,8 @@ NO_PREDICTION = "no_prediction"
 
 FAILED_NO_TEXT_SHARE = 0.5
 FAILED_MIN_ARTICLES = 20
+DEGENERATE_SCORES = "degenerate_scores"
+DEGENERATE_MIN_SCORED = 20   # a finished job with at least this many scores that are all one value
 
 
 @dataclass(frozen=True)
@@ -47,6 +49,22 @@ def legacy_text_status(text_status: Optional[str], ingress_status: str) -> str:
     if ingress_status == "failed":
         return TEXT_MISSING  # the old code's "MEDLINE not found"
     return TEXT_OK
+
+
+def degenerate_scores(scores: Iterable[Optional[float]]) -> bool:
+    """A real model never gives DEGENERATE_MIN_SCORED articles the same score.
+
+    All 0.0 (CellTriage, 25 Oct-8 Nov 2026), all 0.5, all identical: that is a
+    wrong or degraded model, not a batch of equally relevant papers."""
+    vals = [float(s) for s in scores if s is not None]
+    return len(vals) >= DEGENERATE_MIN_SCORED and max(vals) == min(vals)
+
+
+def with_degenerate_check(summary: "JobSummary", scores: Iterable[Optional[float]]) -> "JobSummary":
+    """A done/partial job whose scores are one single value becomes failed (error degenerate_scores)."""
+    if summary.status in ("done", "partial") and degenerate_scores(scores):
+        return replace(summary, status="failed", error=DEGENERATE_SCORES)
+    return summary
 
 
 def summarize(rows: Iterable[Tuple[Optional[str], str, str]]) -> JobSummary:
